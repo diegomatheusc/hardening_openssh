@@ -181,6 +181,166 @@ Salve as configurações e reinicie o serviço:
 ```bash
 systemctl restart sshd
 ```
+##
 
+<h3>6. Chaves SSH com frases de segurança (passphrases)</h3>
 
+Utilizar chaves SSH com frases de segurança (passphrases) é uma prática importante para proteger suas chaves privadas, adicionando uma camada extra de segurança à autenticação. Uma frase de segurança é como uma senha, mas geralmente é mais longa e complexa.
 
+Gerar um par de chaves SSH:
+Se você ainda não tem um par de chaves SSH (chave pública e chave privada), você pode gerá-lo usando o comando ssh-keygen. No terminal do seu computador local, execute o seguinte comando:
+
+```bash
+ssh-keygen -t rsa
+```
+
+Você pode optar por salvar a chave em um diretório específico ou simplesmente pressionar "Enter" para aceitar o local padrão (**~/.ssh/id_rsa**).
+
+Digite uma frase de segurança (passphrase):
+Ao gerar a chave, o ssh-keygen irá perguntar se você deseja criar uma frase de segurança (passphrase). É altamente recomendável que você insira uma frase de segurança aqui para proteger sua chave privada. A frase de segurança deve ser uma senha forte e difícil de adivinhar.
+
+A frase de segurança é usada para criptografar sua chave privada, e você precisará inseri-la sempre que usar a chave. Certifique-se de memorizá-la ou armazená-la com segurança, pois não é possível recuperar a chave privada sem ela.
+
+Copiar a chave pública para o servidor remoto:
+Após gerar as chaves, você deve copiar a chave pública (id_rsa.pub) para o servidor remoto. Use o comando ssh-copy-id para fazer isso:
+
+```bash
+ssh-copy-id username@seu_servidor
+```
+
+Substitua username pelo seu nome de usuário no servidor remoto e seu_servidor pelo endereço IP ou nome de domínio do servidor.
+
+O ssh-copy-id copiará a chave pública para o arquivo **~/.ssh/authorized_keys** no servidor remoto, permitindo que você faça login no servidor usando a chave privada protegida por frase de segurança.
+
+Testar o login com chave SSH:
+Após copiar a chave pública para o servidor remoto, você pode tentar fazer login no servidor usando a chave SSH:
+
+```bash
+ssh username@seu_servidor
+```
+
+##
+
+<h3>7. Regras de Firewall (UFW)</h3>
+Você precisará configurar o firewall do sistema operacional para permitir o tráfego de SSH (porta 22 por padrão, 4567 no nosso exemplo) e bloquear ou permitir outras portas conforme necessário. 
+
+Instale o UFW (Uncomplicated Firewall) se ainda não estiver instalado:
+
+```bash
+sudo apt update
+sudo apt install ufw
+```
+
+Defina a porta SSH (22) como permitida:
+
+```bash
+sudo ufw allow 22
+```
+
+Se desejar permitir o SSH em uma porta personalizada você também pode fazer:
+
+```bash
+sudo ufw allow 4567
+```
+
+Recarregue as regras:
+
+```bash
+sudo ufw enable
+```
+
+Verifique o status do UFW para garantir que as regras estejam ativadas:
+
+```bash
+sudo ufw status
+```
+
+##
+
+<h3>8. Monitoramento dos logs</h3>
+
+```bash
+vim /var/log/auth.log
+```
+
+##
+
+<h3>9. Desabilitar o Acesso SSH baseado em Senhas</h3>
+
+Desabilitar o acesso por senhas no OpenSSH é uma prática recomendada em termos de segurança, pois reforça a autenticação usando chaves públicas, tornando mais difícil para os atacantes tentarem adivinhar ou forçar senhas de acesso ao servidor. Usar chaves públicas com autenticação por senha é uma forma mais segura de proteger o acesso ao seu servidor.
+
+- **Certifique-se de ter configurado a autenticação por chaves SSH**:
+Antes de desabilitar o acesso por senhas, é importante garantir que você já configurou a autenticação por chaves SSH para o(s) usuário(s) que precisam acessar o servidor. Se você ainda não configurou as chaves SSH, consulte a seção "Como Utilizar Chaves SSH com frases de segurança (passphrases) no OpenSSH" neste mesmo guia.
+
+- **Edite o arquivo de configuração do OpenSSH**:
+Abra o arquivo de configuração do OpenSSH, geralmente chamado de **sshd_config**, usando um editor de texto com privilégios administrativos. O local do arquivo pode variar dependendo do sistema operacional:
+
+```bash
+sudo vim /etc/ssh/sshd_config
+```
+
+- **Localize a linha que contém PasswordAuthentication** e certifique-se de que ela esteja definida como no. Se a linha não existir, você pode adicioná-la ao arquivo. Certifique-se de remover o caractere # no início da linha para descomentá-la, se necessário.
+
+```bash
+PasswordAuthentication no
+```
+
+Essa configuração desabilita o acesso por senhas no OpenSSH.
+
+Salve as alterações no arquivo de configuração e feche o editor de texto.
+
+Reinicie o serviço OpenSSH para que as alterações entrem em vigor:
+
+Em distribuições baseadas em Debian (como o Ubuntu):
+
+```bash
+sudo systemctl restart sshd
+```
+
+##
+
+<h3>10. Desabilitar recursos não utilizados</h3>
+
+Desabilitar recursos não utilizados no OpenSSH é uma prática recomendada em termos de segurança, pois reduz a superfície de ataque do servidor SSH. A menos que você precise de recursos específicos, é uma boa ideia desabilitar aqueles que não estão sendo usados para minimizar o risco de possíveis vulnerabilidades.
+
+- **Desabilitar o encaminhamento X11 (X11 Forwarding)**:
+O encaminhamento X11 permite que você execute aplicativos gráficos de um servidor remoto e exiba a interface gráfica em sua máquina local. Em muitos casos, o encaminhamento X11 não é necessário em servidores sem interface gráfica, e desabilitá-lo pode reduzir a exposição a possíveis ataques.
+
+Para desabilitar o encaminhamento X11, edite o arquivo de configuração do OpenSSH (sshd_config) e adicione ou certifique-se de que a seguinte linha esteja definida como no:
+
+```bash
+X11Forwarding no
+```
+
+- **Desabilitar o encaminhamento da agente SSH (SSH Agent Forwarding)**:
+O encaminhamento da agente SSH permite que chaves privadas sejam encaminhadas de sua máquina local para o servidor remoto, o que pode ser conveniente para evitar que você precise armazenar suas chaves em várias máquinas. No entanto, se não for necessário, é mais seguro desabilitá-lo.
+
+Para desabilitar o encaminhamento da agente SSH, adicione ou certifique-se de que a seguinte linha esteja definida como no no arquivo de configuração do OpenSSH (sshd_config):
+
+```bash
+AllowAgentForwarding no
+```
+
+- **Desabilitar o encaminhamento de porta (Port Forwarding)**:
+O encaminhamento de porta permite que você encaminhe portas de um servidor remoto para sua máquina local ou de sua máquina local para o servidor remoto. Embora seja uma funcionalidade útil, é importante desabilitá-la se não for necessária, para evitar o uso indevido e potencial exploração.
+
+Para desabilitar o encaminhamento de porta, adicione ou certifique-se de que a seguinte linha esteja definida como no no arquivo de configuração do OpenSSH (sshd_config):
+
+```bash
+AllowTcpForwarding no
+```
+
+- **Desabilitar o acesso root via SSH**:
+Permitir acesso direto como usuário root via SSH pode ser um risco de segurança significativo, pois os ataques de força bruta geralmente visam contas de usuário "root". É recomendável desabilitar o acesso root via SSH e usar um usuário normal com privilégios de superusuário (sudo) para administrar o servidor.
+
+Para desabilitar o acesso root via SSH, adicione ou certifique-se de que a seguinte linha esteja definida como no no arquivo de configuração do OpenSSH (sshd_config):
+
+```bash
+PermitRootLogin no
+```
+
+Após fazer as alterações no arquivo de configuração do OpenSSH, salve-o e reinicie o serviço OpenSSH para que as configurações entrem em vigor:
+
+```bash
+sudo systemctl restart sshd
+```
