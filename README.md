@@ -11,9 +11,7 @@
 - [x] Desabilitar o Acesso SSH baseado em Senhas
 - [x] Desabilitar Recursos Não Utilizados do SSH
 - [x] Realizar Auditorias Regulares na Configuração do Servidor SSH
-- [x] Desabilitar Pedidos de Conexão SSH sem Senha para Usuários
 - [x] Configurar um Limite para Tentativas de Senha
-- [x] Desabilitar o Encaminhamento (Forwarding) X11
 - [x] Utilizar Autenticação por Chave Pública (public key authentication)
 
 
@@ -54,7 +52,7 @@ APT::Periodic::Update-Package-Lists "1";
 Por último, configure o cronjob para atualizações automáticas editando o arquivo **/etc/apt/apt.conf.d/10periodic**:
 
 ```bash
-sudo nano /etc/apt/apt.conf.d/10periodic
+sudo vim /etc/apt/apt.conf.d/10periodic
 ```
 
 Verifique se as seguintes linhas estão definidas como abaixo:
@@ -344,3 +342,48 @@ Após fazer as alterações no arquivo de configuração do OpenSSH, salve-o e r
 ```bash
 sudo systemctl restart sshd
 ```
+##
+
+<h3>11. Definir limite de tentativas</h3>
+
+Para configurar um limite de tentativas de senha no servidor OpenSSH e prevenir ataques de força bruta, você pode utilizar a opção **MaxAuthTries** no arquivo de configuração **sshd_config**. Essa opção define o número máximo de tentativas de autenticação (senha ou chave pública) permitidas antes que o servidor encerre a conexão.
+
+```bash
+sudo vim /etc/ssh/sshd_config
+```
+
+```bash
+MaxAuthTries 4
+```
+
+Reinicie o serviço do OpenSSH:
+
+```bash
+systemctl restart sshd
+```
+##
+
+<h3>12. Autenticação por chave pública</h3>
+
+A autenticação por chave pública é uma forma segura de fazer login em servidores SSH pois não se faz necessário digitar repetidamente senhas e é mais resistente a ataques de brute-force.
+
+Primeiro verifique se você já tem um par de chaves, caso não crie no formato RSA - 2048 bits:
+
+```bash
+ssh-keygen -t rsa -b 2048
+```
+
+> -t = type
+
+> -b = bits
+
+Copie a nova chave para o servidor:
+
+```bash
+ssh-copy-id usuario@ip
+```
+
+Fim.
+
+
+
